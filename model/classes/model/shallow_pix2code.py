@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-__author__ = 'Tony Beltramelli - www.tonybeltramelli.com'
+
 
 from keras.layers import Input, Dense, Dropout, \
                          RepeatVector, LSTM, concatenate, \
@@ -11,24 +11,18 @@ from .Config import *
 from .AModel import *
 
 
-class pix2code(AModel):
+class shallow_pix2code(AModel):
     def __init__(self, input_shape, output_size, output_path):
         AModel.__init__(self, input_shape, output_size, output_path)
-        self.name = "pix2code"
+        self.name = "shallow_pix2code"
 
         image_model = Sequential()
+        print(input_shape)
         image_model.add(Conv2D(32, (3, 3), padding='valid', activation='relu', input_shape=input_shape))
-        image_model.add(Conv2D(32, (3, 3), padding='valid', activation='relu'))
         image_model.add(MaxPooling2D(pool_size=(2, 2)))
         image_model.add(Dropout(0.25))
 
         image_model.add(Conv2D(64, (3, 3), padding='valid', activation='relu'))
-        image_model.add(Conv2D(64, (3, 3), padding='valid', activation='relu'))
-        image_model.add(MaxPooling2D(pool_size=(2, 2)))
-        image_model.add(Dropout(0.25))
-
-        image_model.add(Conv2D(128, (3, 3), padding='valid', activation='relu'))
-        image_model.add(Conv2D(128, (3, 3), padding='valid', activation='relu'))
         image_model.add(MaxPooling2D(pool_size=(2, 2)))
         image_model.add(Dropout(0.25))
 
@@ -45,14 +39,12 @@ class pix2code(AModel):
 
         language_model = Sequential()
         language_model.add(LSTM(128, return_sequences=True, input_shape=(CONTEXT_LENGTH, output_size)))
-        language_model.add(LSTM(128, return_sequences=True))
 
         textual_input = Input(shape=(CONTEXT_LENGTH, output_size))
         encoded_text = language_model(textual_input)
 
         decoder = concatenate([encoded_image, encoded_text])
 
-        decoder = LSTM(512, return_sequences=True)(decoder)
         decoder = LSTM(512, return_sequences=False)(decoder)
         decoder = Dense(output_size, activation='softmax')(decoder)
 
